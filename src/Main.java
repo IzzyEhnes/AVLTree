@@ -16,7 +16,7 @@ class Node
     public Node(int inValue)
     {
         value = inValue;
-        height = -1;
+        height = 0;
         left = null;
         right = null;
     }
@@ -106,20 +106,24 @@ class AVLTree
 
     public Node insert(Node inNode, int inValue)
     {
+        //System.out.println("INSERT!!!!!!!!");
+
         if (inNode == null)
         {
             return (new Node(inValue));
         }
 
+        //System.out.println("height: " + inNode.getHeight());
+
         if (inValue < inNode.getValue())
         {
-            System.out.println("Inserted " + inValue + " left");
+            //System.out.println("Inserted " + inValue + " left");
             inNode.setLeft(insert(inNode.getLeft(), inValue));
         }
 
         else
         {
-            System.out.println("Inserted " + inValue + " right");
+            //System.out.println("Inserted " + inValue + " right");
             inNode.setRight(insert(inNode.getRight(), inValue));
         }
 
@@ -137,36 +141,37 @@ class AVLTree
         int balance = getBalance(inNode);
         System.out.println("Balance: " + balance);
 
-
-        // If left heavy
-        if (balance > 1)
+        // left heavy outside
+        if (balance > 1 && getBalance(inNode.getLeft()) > 0)
         {
-            if (inNode.getRight().getRight().getHeight() > inNode.getRight().getLeft().getHeight())
-            {
-                inNode = rotateLeft(inNode);
-            }
-
-            else
-            {
-                inNode.setRight(rotateRight(inNode.getRight()));
-                inNode = rotateLeft(inNode);
-            }
+            System.out.println("LEFT heavy OUTSIDE");
+            return rotateRight(inNode);
         }
 
-        else if (balance < -1)
+        // right heavy outside
+        if (balance < -1 && getBalance(inNode.getRight()) < 0)
         {
-            if (inNode.getLeft().getLeft().getHeight() > inNode.getLeft().getRight().getHeight())
-            {
-                inNode = rotateRight(inNode);
-            }
-
-            else
-            {
-                inNode.setLeft(rotateLeft(inNode.getLeft()));
-                inNode = rotateRight(inNode);
-            }
+            System.out.println("RIGHT heavy OUTSIDE");
+            return rotateLeft(inNode);
         }
 
+        // left heavy inside
+        if (balance > 1 && getBalance(inNode.getLeft()) < 0)
+        {
+            System.out.println("LEFT heavy INSIDE");
+            inNode.setLeft(rotateLeft(inNode.getLeft()));
+
+            return rotateRight(inNode);
+        }
+
+        // right heavy inside
+        if (balance > 0 && getBalance(inNode.getRight()) > 0)
+        {
+            System.out.println("RIGHT heavy INSIDE");
+            inNode.setRight(rotateRight(inNode.getRight()));
+
+            return rotateLeft(inNode);
+        }
 
         return inNode;
     }
@@ -201,10 +206,10 @@ class AVLTree
     public Node rotateLeft(Node inNode)
     {
         Node newRoot = inNode.getRight();
-        Node inRightsLeft = newRoot.getLeft();
+        Node midNode = newRoot.getLeft();
 
         newRoot.setLeft(inNode);
-        inNode.setRight(inRightsLeft);
+        inNode.setRight(midNode);
 
         updateHeight(inNode);
         updateHeight(newRoot);
@@ -217,10 +222,10 @@ class AVLTree
     public Node rotateRight(Node inNode)
     {
         Node newRoot = inNode.getLeft();
-        Node inLeftsRight = newRoot.getRight();
+        Node midNode = newRoot.getRight();
 
-        inNode.setLeft(newRoot);
-        newRoot.setLeft(inLeftsRight);
+        newRoot.setRight(inNode);
+        inNode.setLeft(midNode);
 
         updateHeight(inNode);
         updateHeight(newRoot);
@@ -257,7 +262,7 @@ class AVLTree
         {
             int height = root.getHeight();
 
-            System.out.println("height: " + height);
+            //System.out.println("height: " + height);
 
             for (int level = 0; level <= height + 1; level++)
             {
@@ -315,7 +320,6 @@ public class Main
         tree.insert(86);
         tree.insert(75);
         tree.insert(30);
-
 
         tree.getLevelOrder();
         System.out.println(tree.getLevelOrderString());
