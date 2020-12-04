@@ -6,10 +6,17 @@ class Node
     private Node left;
 
 
+    public Node()
+    {
+
+    }
+
+
 
     public Node(int inValue)
     {
-        this.value = inValue;
+        value = inValue;
+        height = -1;
         left = null;
         right = null;
     }
@@ -72,12 +79,27 @@ class Node
 class AVLTree
 {
     private Node root;
+    private String levelOrder = "";
 
 
 
     public AVLTree()
     {
         root = null;
+    }
+
+
+
+    public String getLevelOrderString()
+    {
+        return levelOrder;
+    }
+
+
+
+    public void insert(int key)
+    {
+        root = insert(root, key);
     }
 
 
@@ -91,11 +113,13 @@ class AVLTree
 
         if (inValue < inNode.getValue())
         {
+            System.out.println("Inserted " + inValue + " left");
             inNode.setLeft(insert(inNode.getLeft(), inValue));
         }
 
         else
         {
+            System.out.println("Inserted " + inValue + " right");
             inNode.setRight(insert(inNode.getRight(), inValue));
         }
 
@@ -108,9 +132,11 @@ class AVLTree
 
     public Node rebalance(Node inNode)
     {
-        inNode.setHeight(Math.max(inNode.getLeft().getHeight(), inNode.getRight().getHeight()) + 1);
+        updateHeight(inNode);
 
         int balance = getBalance(inNode);
+        System.out.println("Balance: " + balance);
+
 
         // If left heavy
         if (balance > 1)
@@ -141,6 +167,7 @@ class AVLTree
             }
         }
 
+
         return inNode;
     }
 
@@ -148,8 +175,23 @@ class AVLTree
 
     public int getBalance(Node inNode)
     {
-        int leftHeight = inNode.getLeft().getHeight();
-        int rightHeight = inNode.getRight().getHeight();
+        int leftHeight = -1;
+        int rightHeight = -1;
+
+        if (inNode == null)
+        {
+            return 0;
+        }
+
+        if (inNode.getLeft() != null)
+        {
+            leftHeight = inNode.getLeft().getHeight();
+        }
+
+        if (inNode.getRight() != null)
+        {
+            leftHeight = inNode.getRight().getHeight();
+        }
 
         return leftHeight - rightHeight;
     }
@@ -158,32 +200,32 @@ class AVLTree
 
     public Node rotateLeft(Node inNode)
     {
-        Node inRight = inNode.getRight();
-        Node inRightLeft = inRight.getLeft();
+        Node newRoot = inNode.getRight();
+        Node inRightsLeft = newRoot.getLeft();
 
-        inRight.setLeft(inNode);
-        inNode.setRight(inRightLeft);
+        newRoot.setLeft(inNode);
+        inNode.setRight(inRightsLeft);
 
         updateHeight(inNode);
-        updateHeight(inRight);
+        updateHeight(newRoot);
 
-        return inRight;
+        return newRoot;
     }
 
 
 
     public Node rotateRight(Node inNode)
     {
-        Node inLeft = inNode.getLeft();
-        Node inLeftRight = inLeft.getRight();
+        Node newRoot = inNode.getLeft();
+        Node inLeftsRight = newRoot.getRight();
 
-        inLeft.setRight(inNode);
-        inNode.setLeft(inLeftRight);
+        inNode.setLeft(newRoot);
+        newRoot.setLeft(inLeftsRight);
 
         updateHeight(inNode);
-        updateHeight(inLeft);
+        updateHeight(newRoot);
 
-        return inLeft;
+        return newRoot;
     }
 
 
@@ -206,6 +248,46 @@ class AVLTree
 
         inNode.setHeight(Math.max(leftHeight, rightHeight) + 1);
     }
+
+
+
+    public void getLevelOrder()
+    {
+        if (root != null)
+        {
+            int height = root.getHeight();
+
+            System.out.println("height: " + height);
+
+            for (int level = 0; level <= height + 1; level++)
+            {
+                getLevelOrderRecursive(root, level);
+            }
+        }
+    }
+
+
+
+    public void getLevelOrderRecursive(Node inNode, int level)
+    {
+        if (inNode == null)
+        {
+            return;
+        }
+
+        if (level == 0)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.append(levelOrder).append(inNode.getValue() + "\n");
+            levelOrder = sb.toString();
+        }
+
+        else
+        {
+            getLevelOrderRecursive(inNode.getLeft(), level - 1);
+            getLevelOrderRecursive(inNode.getRight(), level - 1);
+        }
+    }
 }
 
 
@@ -218,6 +300,24 @@ public class Main
 
     public static void main(String[] args)
     {
-	// write your code here
+        AVLTree tree = new AVLTree();
+
+        /*
+        tree.insert(500);
+        tree.insert(400);
+        tree.insert(600);
+        tree.insert(300);
+        tree.insert(700);
+        tree.insert(200);
+        tree.insert(800);
+         */
+
+        tree.insert(86);
+        tree.insert(75);
+        tree.insert(30);
+
+
+        tree.getLevelOrder();
+        System.out.println(tree.getLevelOrderString());
     }
 }
