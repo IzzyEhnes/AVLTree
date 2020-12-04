@@ -1,3 +1,9 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.util.Scanner;
+
 class Node
 {
     private int value;
@@ -5,6 +11,7 @@ class Node
     private int balanceFactor;
     private Node right;
     private Node left;
+
 
 
     public Node()
@@ -114,6 +121,7 @@ class AVLTree
 
     public void insert(int key)
     {
+        System.out.println("\nInsert " + key);
         root = insert(root, key);
     }
 
@@ -138,7 +146,8 @@ class AVLTree
 
         inNode = rebalance(inNode);
 
-        inNode.setBalanceFactor(inNode.getBalanceFactor());
+        // sets balance factor so it can be added to output later
+        inNode.setBalanceFactor(getBalance(inNode));
 
         return inNode;
     }
@@ -150,26 +159,25 @@ class AVLTree
         updateHeight(inNode);
 
         int balance = getBalance(inNode);
-        System.out.println("Balance: " + balance);
 
         // left heavy outside
-        if (balance > 1 && getBalance(inNode.getLeft()) > 0)
+        if (balance > 1 && getBalance(inNode.getLeft()) >= 0)
         {
-            System.out.println("LEFT heavy OUTSIDE");
+            System.out.println("\nLEFT heavy OUTSIDE");
             return rotateRight(inNode);
         }
 
         // right heavy outside
-        if (balance < -1 && getBalance(inNode.getRight()) < 0)
+        if (balance < -1 && getBalance(inNode.getRight()) <= 0)
         {
-            System.out.println("RIGHT heavy OUTSIDE");
+            System.out.println("\nRIGHT heavy OUTSIDE");
             return rotateLeft(inNode);
         }
 
         // left heavy inside
         if (balance > 1 && getBalance(inNode.getLeft()) < 0)
         {
-            System.out.println("LEFT heavy INSIDE");
+            System.out.println("\nLEFT heavy INSIDE");
             inNode.setLeft(rotateLeft(inNode.getLeft()));
 
             return rotateRight(inNode);
@@ -178,7 +186,7 @@ class AVLTree
         // right heavy inside
         if (balance < -1 && getBalance(inNode.getRight()) > 0)
         {
-            System.out.println("RIGHT heavy INSIDE");
+            System.out.println("\nRIGHT heavy INSIDE");
             inNode.setRight(rotateRight(inNode.getRight()));
 
             return rotateLeft(inNode);
@@ -191,36 +199,25 @@ class AVLTree
 
     public int getBalance(Node inNode)
     {
-        int leftHeight = -1;
-        int rightHeight = -1;
-
         if (inNode == null)
         {
             return 0;
         }
 
-        if (inNode.getLeft() != null)
-        {
-            leftHeight = inNode.getLeft().getHeight();
-        }
-
-        if (inNode.getRight() != null)
-        {
-            leftHeight = inNode.getRight().getHeight();
-        }
-
-        return leftHeight - rightHeight;
+        return height(inNode.getLeft()) - height(inNode.getRight());
     }
 
 
 
     public Node rotateLeft(Node inNode)
     {
+        System.out.println("Left rotation on node " + inNode.getValue());
+
         Node newRoot = inNode.getRight();
-        Node midNode = newRoot.getLeft();
+        Node newRootLeft = newRoot.getLeft();
 
         newRoot.setLeft(inNode);
-        inNode.setRight(midNode);
+        inNode.setRight(newRootLeft);
 
         updateHeight(inNode);
         updateHeight(newRoot);
@@ -232,11 +229,13 @@ class AVLTree
 
     public Node rotateRight(Node inNode)
     {
+        System.out.println("Right rotation on node " + inNode.getValue());
+
         Node newRoot = inNode.getLeft();
-        Node midNode = newRoot.getRight();
+        Node newRootRight = newRoot.getRight();
 
         newRoot.setRight(inNode);
-        inNode.setLeft(midNode);
+        inNode.setLeft(newRootRight);
 
         updateHeight(inNode);
         updateHeight(newRoot);
@@ -248,21 +247,22 @@ class AVLTree
 
     public void updateHeight(Node inNode)
     {
-        int leftHeight = -1;
+        inNode.setHeight(Math.max(height(inNode.getLeft()), height(inNode.getRight())) + 1);
+    }
 
-        if (inNode.getLeft() != null)
+
+
+    public int height(Node inNode)
+    {
+        if (inNode == null)
         {
-            leftHeight = inNode.getLeft().getHeight();
+            return -1;
         }
 
-        int rightHeight = -1;
-
-        if (inNode.getRight() != null)
+        else
         {
-            rightHeight = inNode.getRight().getHeight();
+            return  inNode.getHeight();
         }
-
-        inNode.setHeight(Math.max(leftHeight, rightHeight) + 1);
     }
 
 
@@ -292,7 +292,9 @@ class AVLTree
         if (level == 0)
         {
             StringBuilder sb = new StringBuilder();
-            sb.append(levelOrder).append(inNode.getValue() + "\n");
+            sb.append(levelOrder).append("\nValue: " + inNode.getValue() + "\nHeight: " + inNode.getHeight() +
+                    "\nBalance factor: " + inNode.getBalanceFactor() + "\n");
+
             levelOrder = sb.toString();
         }
 
@@ -309,38 +311,74 @@ class AVLTree
 
 
 
-public class Main
+class Driver
 {
+    public static AVLTree readFile(String fileName)
+    {
+        Scanner fileReader = null;
+
+        try
+        {
+            fileReader = new Scanner(new File(fileName));
+        }
+
+        catch (FileNotFoundException fileError)
+        {
+            System.out.println(String.format
+                    ("There was a problem opening file \"%s\": \n\tError = %s", fileName, fileError.getMessage()));
+
+            System.out.println("Exiting program...");
+
+            System.exit(1);
+        }
+
+        AVLTree tree = new AVLTree();
+
+        while (fileReader.hasNext())
+        {
+            int num = fileReader.nextInt();
+
+            tree.insert(num);
+        }
+
+        fileReader.close();
+
+        return tree;
+    }
+
+
+
+    public static void writeFile(AVLTree inTree, String fileName)
+    {
+        try
+        {
+            File outputFile = new File(fileName);
+
+            FileWriter fw = new FileWriter(outputFile.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
+
+            inTree.getLevelOrder();
+            bw.write(inTree.getLevelOrderString());
+
+            bw.close();
+            fw.close();
+        }
+
+        catch (Exception ex)
+        {
+            System.out.print("\nError encountered when creating file: ");
+            System.out.println(ex.getMessage());
+        }
+    }
+
+
 
     public static void main(String[] args)
     {
         AVLTree tree = new AVLTree();
 
-        /*
-        tree.insert(500);
-        tree.insert(400);
-        tree.insert(600);
-        tree.insert(300);
-        tree.insert(700);
-        tree.insert(200);
-        tree.insert(800);
-         */
+        tree = readFile("src/input.txt");
 
-        /*
-        tree.insert(86);
-        tree.insert(75);
-        tree.insert(30);
-         */
-
-        tree.insert(12);
-        tree.insert(1);
-        tree.insert(18);
-        tree.insert(15);
-        tree.insert(22);
-        tree.insert(52);
-        tree.insert(40);
-
-        tree.getLevelOrder();
-        System.out.println(tree.getLevelOrderString());
+        writeFile(tree, "src/output.txt");
     }
 }
